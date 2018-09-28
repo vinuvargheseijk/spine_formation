@@ -264,7 +264,7 @@ def main():
 
 ###    IRSpinit.nInit=0.0
     for ci in range(90,110):
-         Cdcinit[ci].concInit=np.exp(-((ci-100)**2)/10.**2)*0.010
+         Cdcinit[ci].concInit=np.exp(-((ci-100)**2)/10.**2)*0.005+0.005
 ##        Cdcinit[ci].concInit=0.010
     PIPinit.nInit=565
 
@@ -302,6 +302,10 @@ output=radm
 IRvec=moose.vec( '/model/chem/dend/IRSp53' ).n
 curv_IRSp53=moose.element( '/model/chem/dend/curv_IRSp53')
 Cdcvec=moose.vec( '/model/chem/dend/Cdc42' ).n
+if count==1:
+    Cdcinit=moose.vec( '/model/chem/dend/Cdc42' ).nInit
+    pos=np.unravel_index(np.argmax(Cdcinit), Cdcinit.shape)
+    pos=pos[0]
 heightvec=moose.vec( '/model/chem/dend/height' ).n
 curv_IRSp53vec=moose.vec('/model/chem/dend/curv_IRSp53').n
 IRSp53_mvec=moose.vec('/model/chem/dend/IRSp53_m').n
@@ -319,18 +323,18 @@ moose.vec('/model/chem/dend/detach').n=-moose.vec('/model/chem/dend/sort').n+max
 ##    plt.plot(moose.vec('/model/chem/dend/sort').n)
 ##    plt.figure(2)
 ##    plt.plot(moose.vec('/model/chem/dend/Rad').n)
-
 for gri in range(0,len(Cdcvec)):
-   curv[gri]=1.0*((3*0.027*(curv_IRSp53vec[gri]+IRSp53_mvec[gri])**2)/(1.0+3.0*0.027*(curv_IRSp53vec[gri]+curv_ir_vec[gri]+IRSp53_mvec[gri])**2))*0.055*np.exp(-(moose.vec('/model/chem/dend/mesh')[gri].Coordinates[0]-5e-6)**2/(2*0.1e-6**2))
+   curv[gri]=1.0*((3*0.027*(curv_IRSp53vec[gri]+IRSp53_mvec[gri])**2)/(1.0+3.0*0.027*(curv_IRSp53vec[gri]+curv_ir_vec[gri]+IRSp53_mvec[gri])**2))*0.055*np.exp(-(moose.vec('/model/chem/dend/mesh')[gri].Coordinates[0]-moose.vec('/model/chem/dend/mesh')[pos].Coordinates[0])**2/(2*0.1e-6**2))
 if count==1:
    maxCIR=[]
    maxIR=[]
    max_curv=[]
 moose.vec('/model/chem/dend/curv').n=curv
 moose.vec('/model/chem/dend/curv_pip').n=curv
-maxCIR.append(3*max(moose.vec('/model/chem/dend/curv_IRSp53').n))
-maxIR.append(max(moose.vec('/model/chem/dend/IRSp53_m').n))
-max_curv.append(max(moose.vec('/model/chem/dend/curv').n))
+if count%500==0:
+  maxCIR.append(max(moose.vec('/model/chem/dend/curv_IRSp53').n))
+  maxIR.append(max(moose.vec('/model/chem/dend/IRSp53_m').n))
+  max_curv.append(max(moose.vec('/model/chem/dend/curv').n))
 pref_curv=0.055
 PIP2vec=moose.vec('/model/chem/dend/PIP2').n
 plt.xlabel('Number of IRSp53 dimers')
@@ -343,6 +347,10 @@ if count%500==0:
    print 'CurvIRSp53', curv_IRSp53vec
    plt.plot(maxCIR,max_curv)
 radmax=max(radv)
+if count%100==0:
+  print " Mass conservation check  "
+  print "Sum of all forms of IRSp53 now", sum(moose.vec('/model/chem/dend/IRSp53_dimer').n)+sum(moose.vec('/model/chem/dend/IRSp53_a').n)+sum(moose.vec('/model/chem/dend/IRSp53_m').n)+sum(moose.vec('/model/chem/dend/curv_IRSp53').n)+sum(moose.vec('/model/chem/dend/cip2').n)+sum(moose.vec('/model/chem/dend/detach/Enz/Enz_cplx').n)+sum(moose.vec('/model/chem/dend/curv/Enz/Enz2_cplx').n)+sum(moose.vec('/model/chem/dend/sort/Enz/Enz_cplx').n)
+  print "Initial sum", sum(moose.vec('/model/chem/dend/IRSp53_dimer').nInit)
 Rn=moose.element( '/model/chem/dend/Rad' ).n
 """
     '''
