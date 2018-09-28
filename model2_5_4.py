@@ -98,8 +98,8 @@ def makeChemProto(name='hydra'):
 ### I assume that deformation happens only after a threshold in number of IBAR is reached. Therefore a condition is given in Rad calculation
 
 ##        Radfun.expr="sqrt((55*4*1e-18)/(2*(0.1+0.08*(ln(1/(1*(((3.0*x0+1.0*x1)/(2*3.14*(0.05*0.45)))*1e-6*54*100)))*(x0>1.0)))))" ##+  sqrt((55*4*1e-18)/(2*0.03))*(x0<0.1)"
-        recFun.expr="0.0*x0+(exp(40*54*((0.02/(x0*1e9))-(1/(2.0*(x0*1e9)*(x0*1e9))))))"
-        Radfun.expr="sqrt((55*4*1e-18)/(2*(0.03+0.08*(ln(1/(1*(((1.0*x0+1.0*x1+x3)/(2*3.14*(0.05*0.45)))*1e-6*54*100)))*(((1.0*x0+1.0*x1+1.0*x2+x3)*54*1e-6*100)/(2.0*3.14*(0.05*0.45))>2.0)))))" ##+  sqrt((55*4*1e-18)/(2*0.03))*(x0<0.1)"
+        recFun.expr="0.0*x0+(exp(70*54*((0.055/(x0*1e9))-(1/(2.0*(x0*1e9)*(x0*1e9))))))"
+        Radfun.expr="sqrt((75*4*1e-18)/(2*(0.04+0.08*(ln(1/(1*(((1.0*x0+1.0*x1+1.0*x3)/(4*3.14*(0.05*0.05)))*1e-6*54)))*(((1.0*x0+1.0*x1+1.0*x2+x3)*54*1e-6*100)/(4.0*3.14*(0.05*0.05))>2.0)))))" ##+  sqrt((55*4*1e-18)/(2*0.03))*(x0<0.1)"
         ###recBAR.expr="0.0004+0.0*x0+30.0*(exp((1/(x0))*0.02*1e-6)-1)"
         ##recBAR.expr="0.0763249212343+exp(-(20*1e-9)/x0)"
         ###recBAR.expr="0.0004+0.0*x0+30.0*((1/(x0+1))*2-1)*(x0>0)"
@@ -193,7 +193,7 @@ def makeModel():
     moose.seed(100)
     rdes.buildModel( '/model' )
     moose.element('/model/chem/dend/Rad').nInit=30e-9
-    #moose.element('/model/chem/dend/stoich').allowNegative=1
+   ## moose.element('/model/chem/dend/stoich').allowNegative=1
     print 'built model'
 
 def makePlot( name, srcVec, field ):
@@ -264,7 +264,7 @@ def main():
 
 ###    IRSpinit.nInit=0.0
     for ci in range(90,110):
-         Cdcinit[ci].concInit=np.exp(-((ci-100)**2)/20.**2)*0.010
+         Cdcinit[ci].concInit=np.exp(-((ci-100)**2)/10.**2)*0.010
 ##        Cdcinit[ci].concInit=0.010
     PIPinit.nInit=565
 
@@ -308,18 +308,20 @@ IRSp53_mvec=moose.vec('/model/chem/dend/IRSp53_m').n
 cip2vec=moose.vec('/model/chem/dend/cip2').n
 cip3vec=moose.vec('/model/chem/dend/cip3').n
 Ipoolvec=moose.vec('/model/chem/dend/Ipool').n
+curv_ir_vec=moose.vec('/model/chem/dend/curv/Enz/Enz2_cplx').n
 curv=moose.vec('/model/chem/dend/curv').n
 cPIP2=moose.element('/model/chem/dend/cPIP2')
-moose.vec('/model/chem/dend/sort').n=(-Ipoolvec+max(Ipoolvec))
-moose.vec('/model/chem/dend/detach').n=(1-moose.vec('/model/chem/dend/sort').n)
-if max(Ipoolvec)>min(Ipoolvec):
-    plt.plot(Ipoolvec)
-    plt.plot(moose.vec('/model/chem/dend/sort').n)
-    plt.figure(2)
-    plt.plot(moose.vec('/model/chem/dend/Rad').n)
+##moose.vec('/model/chem/dend/sort').n=(-Ipoolvec+max(Ipoolvec))
+moose.vec('/model/chem/dend/sort').n=(Ipoolvec-min(Ipoolvec))
+moose.vec('/model/chem/dend/detach').n=-moose.vec('/model/chem/dend/sort').n+max(moose.vec('/model/chem/dend/sort').n)
+##if max(Ipoolvec)>min(Ipoolvec):
+##    plt.plot(Ipoolvec)
+##    plt.plot(moose.vec('/model/chem/dend/sort').n)
+##    plt.figure(2)
+##    plt.plot(moose.vec('/model/chem/dend/Rad').n)
 
 for gri in range(0,len(Cdcvec)):
-   curv[gri]=1.0*((3*0.027*(3*curv_IRSp53vec[gri]+IRSp53_mvec[gri])**2)/(1.0+3.0*0.027*(3*curv_IRSp53vec[gri]+IRSp53_mvec[gri])**2))*0.055*np.exp(-(moose.vec('/model/chem/dend/mesh')[gri].Coordinates[0]-5e-6)**2/(2*0.1e-6**2))
+   curv[gri]=1.0*((3*0.027*(curv_IRSp53vec[gri]+IRSp53_mvec[gri])**2)/(1.0+3.0*0.027*(curv_IRSp53vec[gri]+curv_ir_vec[gri]+IRSp53_mvec[gri])**2))*0.055*np.exp(-(moose.vec('/model/chem/dend/mesh')[gri].Coordinates[0]-5e-6)**2/(2*0.1e-6**2))
 if count==1:
    maxCIR=[]
    maxIR=[]
